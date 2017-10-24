@@ -3,6 +3,7 @@ import ReactDOM from "react-dom";
 import App from "./components/App";
 import registerServiceWorker from "./registerServiceWorker";
 import "./styles/index.css";
+
 // 1
 import {
   ApolloProvider,
@@ -10,9 +11,12 @@ import {
   ApolloClient
 } from "react-apollo";
 
+const SIMPLE_GRAPHCOOL_API_ENDPOINT =
+  "https://api.graph.cool/simple/v1/cj95s5mti2j390126czcetdn9";
+
 // 2
 const networkInterface = createNetworkInterface({
-  uri: "__SIMPLE_API_ENDPOINT__"
+  uri: SIMPLE_GRAPHCOOL_API_ENDPOINT
 });
 
 // 3
