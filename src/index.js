@@ -2,30 +2,60 @@ import React from "react";
 import ReactDOM from "react-dom";
 import App from "./components/App";
 import registerServiceWorker from "./registerServiceWorker";
-import "./styles/index.css";
 import { BrowserRouter } from "react-router-dom";
+import {
+  SubscriptionClient,
+  addGraphQLSubscriptions
+} from "subscriptions-transport-ws";
 
-// 1
+import { GC_AUTH_TOKEN } from "./constants";
+import "./styles/index.css";
+
 import {
   ApolloProvider,
   createNetworkInterface,
   ApolloClient
 } from "react-apollo";
 
-const SIMPLE_GRAPHCOOL_API_ENDPOINT =
-  "https://api.graph.cool/simple/v1/cj95s5mti2j390126czcetdn9";
+const GRAPHCOOL_ENDPOINTS = {
+  simple: "https://api.graph.cool/simple/v1/cj95s5mti2j390126czcetdn9",
+  subscriptions:
+    "wss://subscriptions.us-west-2.graph.cool/v1/cj95s5mti2j390126czcetdn9"
+};
 
-// 2
 const networkInterface = createNetworkInterface({
-  uri: SIMPLE_GRAPHCOOL_API_ENDPOINT
+  uri: GRAPHCOOL_ENDPOINTS.simple
 });
 
-// 3
+const wsClient = new SubscriptionClient(GRAPHCOOL_ENDPOINTS.subscriptions, {
+  reconnect: true,
+  connectionParams: {
+    authToken: localStorage.getItem(GC_AUTH_TOKEN)
+  }
+});
+
+const networkInterfaceWithSubscriptions = addGraphQLSubscriptions(
+  networkInterface,
+  wsClient
+);
+
+networkInterface.use([
+  {
+    applyMiddleware(req, next) {
+      if (!req.options.headers) {
+        req.options.headers = {};
+      }
+      const token = localStorage.getItem(GC_AUTH_TOKEN);
+      req.options.headers.authorization = token ? `Bearer ${token}` : null;
+      next();
+    }
+  }
+]);
+
 const client = new ApolloClient({
-  networkInterface
+  networkInterface: networkInterfaceWithSubscriptions
 });
 
-// 4
 ReactDOM.render(
   <BrowserRouter>
     <ApolloProvider client={client}>
